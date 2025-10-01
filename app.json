@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "VisibilityExperiments",
-    "slug": "VisibilityExperiments",
+    "name": "ViewabilityExperiments",
+    "slug": "ViewabilityExperiments",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "visibilityexperiments",
+    "scheme": "viewability-experiments",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
