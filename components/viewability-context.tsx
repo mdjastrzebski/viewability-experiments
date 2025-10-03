@@ -18,12 +18,12 @@ export function useViewabilityCoordinator() {
 }
 
 interface RootEntry {
-  measureInWindow: Coords;
+  clientRect: Coords;
 }
 
 interface ViewEntry {
   isVisible: boolean;
-  measureInWindow: Coords;
+  clientRect: Coords;
   onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>;
 }
 
@@ -31,21 +31,13 @@ export class ViewabilityCoordinator {
   private readonly views: Map<View, ViewEntry> = new Map();
   private root: View | null = null;
   private rootEntry: RootEntry = {
-    measureInWindow: { x: 0, y: 0, width: 0, height: 0 },
+    clientRect: { x: 0, y: 0, width: 0, height: 0 },
   };
 
   registerRoot(root: View) {
-    console.log("Coordinator - registerRoot");
-    this.root = root;
-    root.measureInWindow((x, y, width, height) => {
-      console.log("Coordinator - registerRoot - measureInWindow", {
-        x,
-        y,
-        width,
-        height,
-      });
-      this.rootEntry.measureInWindow = { x, y, width, height };
-    });
+    // @ts-ignore missing type info
+    this.rootEntry.clientRect = getBoundingClientRect(root);
+    console.log("Coordinator - registerRoot", this.rootEntry);
   }
 
   registerView(
@@ -56,7 +48,7 @@ export class ViewabilityCoordinator {
     this.views.set(view, {
       isVisible: false,
       onVisibilityChangeRef,
-      measureInWindow: { x: 0, y: 0, width: 0, height: 0 },
+      clientRect: { x: 0, y: 0, width: 0, height: 0 },
     });
 
     this.updateView(view);
@@ -67,36 +59,27 @@ export class ViewabilityCoordinator {
   }
 
   updateView(view: View) {
-    console.log("Coordinator - updateView", view?.props?.testID);
-    view.measureInWindow((x, y, width, height) => {
-      console.log("Coordinator - updateView - measureInWindow", {
-        x,
-        y,
-        width,
-        height,
-      });
-      const viewEntry = this.views.get(view)!;
-      viewEntry.measureInWindow = { x, y, width, height };
-
-      this.updateViewVisibility(viewEntry);
-    });
+    const viewEntry = this.views.get(view)!;
+    // @ts-ignore missing type info
+    viewEntry.clientRect = getBoundingClientRect(view);
+    console.log("Coordinator - updateView", totalDuration, viewEntry);
+    this.updateViewVisibility(viewEntry);
   }
 
   updateRoot() {
-    console.log("Coordinator - updateRoot");
-    this.root!.measureInWindow((x, y, width, height) => {
-      console.log("Coordinator - updateRoot - measureInWindow", {
-        x,
-        y,
-        width,
-        height,
-      });
-      this.rootEntry.measureInWindow = { x, y, width, height };
+    if (!this.root) {
+      return;
+    }
 
-      for (const view of this.views.keys()) {
-        this.updateView(view);
-      }
-    });
+    this.rootEntry.clientRect = getBoundingClientRect(this.root!);
+    console.log(
+      "Coordinator - updateRootScroll",
+      totalDuration,
+      this.rootEntry
+    );
+    for (const view of this.views.keys()) {
+      this.updateView(view);
+    }
   }
 
   updateRootScroll() {
@@ -109,12 +92,12 @@ export class ViewabilityCoordinator {
   updateViewVisibility(viewEntry: ViewEntry) {
     const isVisible = isViewable(
       50,
-      viewEntry.measureInWindow.y - this.rootEntry.measureInWindow.y,
-      viewEntry.measureInWindow.y +
-        viewEntry.measureInWindow.height -
-        this.rootEntry.measureInWindow.y,
-      this.rootEntry.measureInWindow.height,
-      viewEntry.measureInWindow.height
+      viewEntry.clientRect.y - this.rootEntry.clientRect.y,
+      viewEntry.clientRect.y +
+        viewEntry.clientRect.height -
+        this.rootEntry.clientRect.y,
+      this.rootEntry.clientRect.height,
+      viewEntry.clientRect.height
     );
 
     if (viewEntry.isVisible !== isVisible) {
@@ -125,4 +108,16 @@ export class ViewabilityCoordinator {
       console.log("Coordinator - updateViewVisibility - noop", viewEntry);
     }
   }
+}
+
+let totalDuration = 0;
+
+function getBoundingClientRect(view: View): Coords {
+  const ts0 = performance.now();
+  // @ts-ignore missing type info
+  const coords = view.unstable_getBoundingClientRect();
+  const ts1 = performance.now();
+  totalDuration += ts1 - ts0;
+
+  return coords;
 }
