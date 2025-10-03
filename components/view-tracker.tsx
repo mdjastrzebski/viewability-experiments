@@ -106,10 +106,17 @@ class ViewabilityCoordinator {
       console.log("updateRoot - measureInWindow", { x, y, width, height });
       this.rootEntry.measureInWindow = { x, y, width, height };
 
-      for (const viewEntry of this.views.values()) {
-        this.updateViewVisibility(viewEntry);
+      for (const view of this.views.keys()) {
+        this.updateView(view);
       }
     });
+  }
+
+  updateRootScroll() {
+    console.log("updateRootScroll");
+    for (const view of this.views.keys()) {
+      this.updateView(view);
+    }
   }
 
   updateViewVisibility(viewEntry: ViewEntry) {
