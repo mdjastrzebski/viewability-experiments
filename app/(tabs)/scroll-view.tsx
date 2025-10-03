@@ -1,9 +1,12 @@
 import { ViewabilityRoot } from "@/components/viewability-root";
 import { ViewabilityTracker } from "@/components/viewability-tracker";
+import { throttle } from "es-toolkit";
 import * as React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 const data = Array.from({ length: 10 }, (_, index) => index);
+
+const THROTTLE_DELAY = 100;
 
 export default function Index() {
   const renderItem = ({ item }: { item: number }) => {
@@ -15,7 +18,13 @@ export default function Index() {
       {(coordinator) => (
         <ScrollView
           onLayout={() => coordinator.updateRoot()}
-          onScroll={() => coordinator.updateRootScroll()}
+          onScroll={throttle(
+            () => coordinator.updateRootScroll(),
+            THROTTLE_DELAY,
+            {
+              edges: ["leading", "trailing"],
+            }
+          )}
         >
           {data.map((item) => renderItem({ item }))}
         </ScrollView>
