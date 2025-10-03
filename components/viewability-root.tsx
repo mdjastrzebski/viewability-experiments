@@ -16,12 +16,12 @@ export function ViewabilityRoot({ children }: ViewabilityRootProps) {
   );
 
   React.useLayoutEffect(() => {
-    console.log("Root - useLayoutEffect");
     const root = rootRef.current!;
+    console.log("🧬 Root - register");
     coordinatorRef.current.registerRoot(root);
   }, []);
 
-  console.log("Root - render");
+  console.log("🧬 Root render");
   return (
     <ViewabilityContext.Provider value={coordinatorRef}>
       <View ref={rootRef}>{children(coordinatorRef.current)}</View>

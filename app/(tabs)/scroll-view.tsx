@@ -43,12 +43,18 @@ function Item({ title }: ItemProps) {
 
   return (
     <View style={styles.item}>
-      <ViewabilityTracker testID={title} onVisibilityChange={setIsTitleVisible}>
+      <ViewabilityTracker
+        testID={title}
+        onVisibilityChange={() => console.log("🧬 Item - title", title)}
+      >
         <Text style={[styles.itemText, isTitleVisible && styles.visible]}>
           Item no. {title}
         </Text>
       </ViewabilityTracker>
-      <ViewabilityTracker testID={title} onVisibilityChange={setIsLoremVisible}>
+      <ViewabilityTracker
+        testID={title}
+        onVisibilityChange={() => console.log("🧬 Item - lorem", title)}
+      >
         <Text style={[styles.itemText, isLoremVisible && styles.visible]}>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua.

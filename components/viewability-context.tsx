@@ -35,16 +35,16 @@ export class ViewabilityCoordinator {
   };
 
   registerRoot(root: View) {
-    // @ts-ignore missing type info
-    this.rootEntry.clientRect = getBoundingClientRect(root);
-    console.log("Coordinator - registerRoot", this.rootEntry);
+    this.root = root;
+    log("⚙️  registerRoot");
+    this.updateRoot();
   }
 
   registerView(
     view: View,
     onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>
   ) {
-    console.log("Coordinator - registerView", view?.props?.testID);
+    log("⚙️  registerView");
     this.views.set(view, {
       isVisible: false,
       onVisibilityChangeRef,
@@ -59,10 +59,14 @@ export class ViewabilityCoordinator {
   }
 
   updateView(view: View) {
+    if (!this.root) {
+      return;
+    }
+
     const viewEntry = this.views.get(view)!;
     // @ts-ignore missing type info
     viewEntry.clientRect = getBoundingClientRect(view);
-    console.log("Coordinator - updateView", totalDuration, viewEntry);
+    //log("⚙️  updateView", totalDuration);
     this.updateViewVisibility(viewEntry);
   }
 
@@ -72,18 +76,14 @@ export class ViewabilityCoordinator {
     }
 
     this.rootEntry.clientRect = getBoundingClientRect(this.root!);
-    console.log(
-      "Coordinator - updateRootScroll",
-      totalDuration,
-      this.rootEntry
-    );
+    log("⚙️  updateRoot", totalDuration);
     for (const view of this.views.keys()) {
       this.updateView(view);
     }
   }
 
   updateRootScroll() {
-    console.log("Coordinator - updateRootScroll");
+    log("⚙️  updateRootScroll");
     for (const view of this.views.keys()) {
       this.updateView(view);
     }
@@ -101,11 +101,9 @@ export class ViewabilityCoordinator {
     );
 
     if (viewEntry.isVisible !== isVisible) {
-      console.log("Coordinator - updateViewVisibility - detected", viewEntry);
+      log("⚙️  CALL: onVisibilityChange", isVisible);
       viewEntry.isVisible = isVisible;
       viewEntry.onVisibilityChangeRef.current(isVisible);
-    } else {
-      console.log("Coordinator - updateViewVisibility - noop", viewEntry);
     }
   }
 }
@@ -120,4 +118,11 @@ function getBoundingClientRect(view: View): Coords {
   totalDuration += ts1 - ts0;
 
   return coords;
+}
+
+const tsEpoch = performance.now();
+
+function log(message: string, ...args: unknown[]) {
+  const ts = (performance.now() - tsEpoch) / 1000;
+  console.log(`${ts.toFixed(3)}: ${message}`, ...args);
 }

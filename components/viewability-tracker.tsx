@@ -21,30 +21,29 @@ export function ViewabilityTracker({
   const testIdRef = React.useRef(testID);
 
   React.useLayoutEffect(() => {
-    console.log("Tracker - useLayoutEffect", testIdRef.current);
     latestVisibilityChangeRef.current = onVisibilityChange;
   }, [onVisibilityChange]);
 
   React.useLayoutEffect(() => {
     const testID = testIdRef.current;
 
-    console.log("Tracker - useLayoutEffect register", testID);
+    console.log("🧬 Tracker - register", testID);
     const view = ref.current!;
     coordinator.registerView(view, latestVisibilityChangeRef);
 
     return () => {
-      console.log("Tracker - useLayoutEffect unregister", testID);
+      console.log("🧬Tracker - unregister", testID);
       coordinator.unregisterView(view);
     };
   }, [coordinator]);
 
   const handleLayout = (_event: LayoutChangeEvent) => {
-    console.log("Tracker - handleLayout", testID);
+    console.log("🧬 Tracker - handleLayout", testID);
     const view = ref.current!;
     coordinator.updateView(view);
   };
 
-  console.log("Tracker - render", testID);
+  console.log("🧬 Tracker - render", testID);
   return (
     <View ref={ref} testID={testID} onLayout={handleLayout}>
       {children}
