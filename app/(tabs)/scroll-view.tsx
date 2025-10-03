@@ -1,4 +1,5 @@
-import { ViewabilityRoot, ViewTracker } from "@/components/view-tracker";
+import { ViewabilityRoot } from "@/components/viewability-root";
+import { ViewabilityTracker } from "@/components/viewability-tracker";
 import * as React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -33,17 +34,17 @@ function Item({ title }: ItemProps) {
 
   return (
     <View style={styles.item}>
-      <ViewTracker testID={title} onVisibilityChange={setIsTitleVisible}>
+      <ViewabilityTracker testID={title} onVisibilityChange={setIsTitleVisible}>
         <Text style={[styles.itemText, isTitleVisible && styles.visible]}>
           Item no. {title}
         </Text>
-      </ViewTracker>
-      <ViewTracker testID={title} onVisibilityChange={setIsLoremVisible}>
+      </ViewabilityTracker>
+      <ViewabilityTracker testID={title} onVisibilityChange={setIsLoremVisible}>
         <Text style={[styles.itemText, isLoremVisible && styles.visible]}>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua.
         </Text>
-      </ViewTracker>
+      </ViewabilityTracker>
     </View>
   );
 }
