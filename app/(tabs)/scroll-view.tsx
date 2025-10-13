@@ -31,12 +31,18 @@ function Item({ title }: ItemProps) {
 
   return (
     <View style={styles.item}>
-      <ViewabilityTracker onVisibilityChange={setIsTitleVisible}>
+      <ViewabilityTracker
+        onVisibilityChange={setIsTitleVisible}
+        viewablePercentThreshold={50}
+      >
         <Text style={[styles.itemText, isTitleVisible && styles.visible]}>
           Item no. {title}
         </Text>
       </ViewabilityTracker>
-      <ViewabilityTracker onVisibilityChange={setIsLoremVisible}>
+      <ViewabilityTracker
+        onVisibilityChange={setIsLoremVisible}
+        viewablePercentThreshold={50}
+      >
         <Text style={[styles.itemText, isLoremVisible && styles.visible]}>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua.

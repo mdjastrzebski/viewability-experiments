@@ -6,12 +6,14 @@ export interface ViewabilityTrackerProps {
   children: React.ReactNode;
   onVisibilityChange: (isVisible: boolean) => void;
   enabled?: boolean;
+  viewablePercentThreshold?: number;
 }
 
 export function ViewabilityTracker({
   children,
   onVisibilityChange,
   enabled = true,
+  viewablePercentThreshold = 50,
 }: ViewabilityTrackerProps) {
   const ref = React.useRef<View | null>(null);
   const onVisibilityChangeRef =
@@ -30,10 +32,10 @@ export function ViewabilityTracker({
 
     tracker.registerView(view, {
       onVisibilityChangeRef,
-      viewablePercentThreshold: 50,
+      viewablePercentThreshold,
     });
     return () => tracker.unregisterView(view);
-  }, [tracker, enabled]);
+  }, [tracker, enabled, viewablePercentThreshold]);
 
   return (
     <View ref={ref} onLayout={() => tracker?.updateView(ref.current)}>
