@@ -5,29 +5,38 @@ import { useViewabilityTracker } from "./viewability-root";
 export interface ViewabilityTrackerProps {
   children: React.ReactNode;
   onVisibilityChange: (isVisible: boolean) => void;
+  enabled?: boolean;
 }
 
 export function ViewabilityTracker({
   children,
   onVisibilityChange,
+  enabled = true,
 }: ViewabilityTrackerProps) {
   const ref = React.useRef<View | null>(null);
-  const latestVisibilityChangeRef =
+  const onVisibilityChangeRef =
     React.useRef<typeof onVisibilityChange>(onVisibilityChange);
   const tracker = useViewabilityTracker();
 
   React.useLayoutEffect(() => {
-    latestVisibilityChangeRef.current = onVisibilityChange;
+    onVisibilityChangeRef.current = onVisibilityChange;
   }, [onVisibilityChange]);
 
   React.useLayoutEffect(() => {
-    const view = ref.current!;
-    tracker.registerView(view, latestVisibilityChangeRef);
+    const view = ref.current;
+    if (!view || !enabled || !tracker) {
+      return;
+    }
+
+    tracker.registerView(view, {
+      onVisibilityChangeRef,
+      viewablePercentThreshold: 50,
+    });
     return () => tracker.unregisterView(view);
-  }, [tracker]);
+  }, [tracker, enabled]);
 
   return (
-    <View ref={ref} onLayout={() => tracker.updateView(ref.current!)}>
+    <View ref={ref} onLayout={() => tracker?.updateView(ref.current)}>
       {children}
     </View>
   );

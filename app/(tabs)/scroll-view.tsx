@@ -13,7 +13,7 @@ export default function Index() {
   return (
     <ViewabilityRoot>
       {({ updateViewability }) => (
-        <ScrollView onLayout={updateViewability} onScroll={updateViewability}>
+        <ScrollView onScroll={updateViewability}>
           {data.map((item) => renderItem({ item }))}
         </ScrollView>
       )}

@@ -6,9 +6,15 @@ import { isViewable } from "./utils";
 
 const THROTTLE_DELAY = 100;
 
+export interface ViewabilityConfig {
+  onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>;
+  viewablePercentThreshold?: number;
+}
+
 interface ViewEntry {
   isVisible: boolean;
   onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>;
+  viewablePercentThreshold?: number;
 }
 
 export class ViewabilityCoordinator {
@@ -22,15 +28,12 @@ export class ViewabilityCoordinator {
     this.updateAllViews();
   }
 
-  registerView(
-    view: View,
-    onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>,
-    id?: string
-  ) {
-    console.log("🍏 Coordinator - registerView", id);
+  registerView(view: View, config: ViewabilityConfig) {
+    console.log("🍏 Coordinator - registerView");
     this.views.set(view, {
       isVisible: false,
-      onVisibilityChangeRef,
+      onVisibilityChangeRef: config.onVisibilityChangeRef,
+      viewablePercentThreshold: config.viewablePercentThreshold,
     });
 
     this.updateView(view);
@@ -41,8 +44,8 @@ export class ViewabilityCoordinator {
     this.views.delete(view);
   }
 
-  updateView(view: View) {
-    if (!this.root) {
+  updateView(view: View | null) {
+    if (!this.root || !view) {
       return;
     }
 
@@ -55,7 +58,7 @@ export class ViewabilityCoordinator {
 
     const viewRect = getBoundingClientRect(view);
     const isVisible = isViewable(
-      50,
+      viewEntry.viewablePercentThreshold ?? 100,
       viewRect.y - this.rootRect.y,
       viewRect.y + viewRect.height - this.rootRect.y,
       this.rootRect.height,
@@ -101,8 +104,14 @@ let totalDuration = 0;
 
 function getBoundingClientRect(view: View): DOMRect {
   const ts0 = performance.now();
-  // @ts-ignore missing type info
-  const coords = view.unstable_getBoundingClientRect();
+
+  const coords =
+    // @ts-ignore missing type info
+    view.getBoundingClientRect?.() ?? view.unstable_getBoundingClientRect?.();
+  if (!coords) {
+    throw new Error("Unable to call (unstable_)getBoundingClientRect");
+  }
+
   const ts1 = performance.now();
   totalDuration += ts1 - ts0;
 
