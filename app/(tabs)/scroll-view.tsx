@@ -13,13 +13,7 @@ export default function Index() {
   return (
     <ViewabilityRoot>
       {({ updateViewability }) => (
-        <ScrollView
-          onLayout={updateViewability}
-          onScroll={() => {
-            console.log("🍓 ScrollView - scroll");
-            updateViewability();
-          }}
-        >
+        <ScrollView onLayout={updateViewability} onScroll={updateViewability}>
           {data.map((item) => renderItem({ item }))}
         </ScrollView>
       )}
@@ -37,18 +31,12 @@ function Item({ title }: ItemProps) {
 
   return (
     <View style={styles.item}>
-      <ViewabilityTracker
-        testID={title + "a"}
-        onVisibilityChange={setIsTitleVisible}
-      >
+      <ViewabilityTracker onVisibilityChange={setIsTitleVisible}>
         <Text style={[styles.itemText, isTitleVisible && styles.visible]}>
           Item no. {title}
         </Text>
       </ViewabilityTracker>
-      <ViewabilityTracker
-        testID={title + "b"}
-        onVisibilityChange={setIsLoremVisible}
-      >
+      <ViewabilityTracker onVisibilityChange={setIsLoremVisible}>
         <Text style={[styles.itemText, isLoremVisible && styles.visible]}>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua.
