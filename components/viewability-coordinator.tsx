@@ -1,55 +1,60 @@
+import { throttle } from "es-toolkit/compat";
 import * as React from "react";
 import { View } from "react-native";
-import { Coords } from "./types";
+import { DOMRect } from "./types";
 import { isViewable } from "./utils";
 
-export const ViewabilityContext = React.createContext<
-  React.RefObject<ViewabilityCoordinator> | undefined
->(undefined);
-
-export function useViewabilityCoordinator() {
-  const context = React.useContext(ViewabilityContext);
-  if (!context) {
-    throw new Error(
-      "useViewabilityContext must be used within a ViewabilityContext"
-    );
-  }
-  return context.current;
-}
+const THROTTLE_DELAY = 100;
 
 interface ViewEntry {
   isVisible: boolean;
   onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>;
+  id?: string;
 }
 
 export class ViewabilityCoordinator {
   private readonly views: Map<View, ViewEntry> = new Map();
   private root: View | null = null;
-  private rootRect: Coords = { x: 0, y: 0, width: 0, height: 0 };
+  private rootRect: DOMRect = { x: 0, y: 0, width: 0, height: 0 };
 
   registerRoot(root: View) {
+    console.log("🍓 Coordinator - registerRoot");
     this.root = root;
     this.updateAllViews();
   }
 
   registerView(
     view: View,
-    onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>
+    onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>,
+    id?: string
   ) {
-    console.log("Coordinator - registerView", view?.props?.testID);
+    console.log("Coordinator - registerView", id);
     this.views.set(view, {
       isVisible: false,
       onVisibilityChangeRef,
+      id,
     });
 
     this.updateView(view);
   }
 
   unregisterView(view: View) {
+    console.log("Coordinator - unregisterView");
     this.views.delete(view);
   }
 
   updateView(view: View) {
+    if (!this.root) {
+      return;
+    }
+
+    const viewEntry = this.views.get(view);
+    if (!viewEntry) {
+      return;
+    }
+
+    console.log("Coordinator - updateView", viewEntry.id);
+
     const viewRect = getBoundingClientRect(view);
     const isVisible = isViewable(
       50,
@@ -59,10 +64,10 @@ export class ViewabilityCoordinator {
       viewRect.height
     );
 
-    const viewEntry = this.views.get(view)!;
     if (viewEntry.isVisible !== isVisible) {
       console.log(
-        "Coordinator - updateViewVisibility - detected",
+        "🍓 Coordinator - updateViewVisibility - detected",
+        viewEntry.id,
         viewRect,
         viewEntry
       );
@@ -70,30 +75,41 @@ export class ViewabilityCoordinator {
       viewEntry.onVisibilityChangeRef.current(isVisible);
     } else {
       console.log(
-        "Coordinator - updateViewVisibility - noop",
+        "🕳️ Coordinator - updateViewVisibility - noop",
+        viewEntry.id,
         viewRect,
         viewEntry
       );
     }
   }
 
-  updateAllViews() {
+  // Note: has to be `throttle` from `es-toolkit/compat` because of https://github.com/toss/es-toolkit/issues/1212
+  updateAllViews = throttle(() => this._updateAllViews(), THROTTLE_DELAY, {
+    leading: false,
+    trailing: true,
+  });
+
+  _updateAllViews() {
     if (!this.root) {
       return;
     }
 
     this.rootRect = getBoundingClientRect(this.root);
 
-    console.log("Coordinator - updateRootScroll");
+    console.log("Coordinator - updateAllViews");
+    totalDuration = 0;
+
     for (const view of this.views.keys()) {
       this.updateView(view);
     }
+
+    console.log("🍓 Coordinator - updateAllViews END", totalDuration);
   }
 }
 
 let totalDuration = 0;
 
-function getBoundingClientRect(view: View): Coords {
+function getBoundingClientRect(view: View): DOMRect {
   const ts0 = performance.now();
   // @ts-ignore missing type info
   const coords = view.unstable_getBoundingClientRect();

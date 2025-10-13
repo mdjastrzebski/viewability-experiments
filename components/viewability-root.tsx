@@ -1,12 +1,14 @@
 import * as React from "react";
 import { View } from "react-native";
-import {
-  ViewabilityContext,
-  ViewabilityCoordinator,
-} from "./viewability-context";
+import { ViewabilityTriggers } from "./types";
+import { ViewabilityCoordinator } from "./viewability-coordinator";
+
+const ViewabilityRootContext = React.createContext<
+  ViewabilityCoordinator | undefined
+>(undefined);
 
 export interface ViewabilityRootProps {
-  children: (coordinator: ViewabilityCoordinator) => React.ReactNode;
+  children: (triggers: ViewabilityTriggers) => React.ReactNode;
 }
 
 export function ViewabilityRoot({ children }: ViewabilityRootProps) {
@@ -16,15 +18,61 @@ export function ViewabilityRoot({ children }: ViewabilityRootProps) {
   );
 
   React.useLayoutEffect(() => {
-    console.log("Root - useLayoutEffect");
-    const root = rootRef.current!;
-    coordinatorRef.current.registerRoot(root);
+    console.log("VRoot - useLayoutEffect");
+    coordinatorRef.current.registerRoot(rootRef.current!);
   }, []);
 
-  console.log("Root - render");
+  console.log("VRoot - render");
+  const childProps: ViewabilityTriggers = React.useMemo(
+    () => ({
+      updateViewability: () => coordinatorRef.current.updateAllViews(),
+    }),
+    []
+  );
+
   return (
-    <ViewabilityContext.Provider value={coordinatorRef}>
-      <View ref={rootRef}>{children(coordinatorRef.current)}</View>
-    </ViewabilityContext.Provider>
+    <ViewabilityRootContext.Provider value={coordinatorRef.current}>
+      <View ref={rootRef}>
+        {typeof children === "function" ? children(childProps) : children}
+      </View>
+    </ViewabilityRootContext.Provider>
+  );
+}
+
+export function useViewabilityTriggers(): ViewabilityTriggers {
+  const context = React.useContext(ViewabilityRootContext);
+  if (!context) {
+    throw new Error(
+      "useViewabilityTriggers must be used within a ViewabilityRoot"
+    );
+  }
+
+  return React.useMemo(
+    () => ({
+      updateViewability: () => context.updateAllViews(),
+    }),
+    [context]
+  );
+}
+
+export function useViewabilityTracker() {
+  const context = React.useContext(ViewabilityRootContext);
+  if (!context) {
+    throw new Error(
+      "useViewabilityTracker must be used within a ViewabilityRoot"
+    );
+  }
+
+  return React.useMemo(
+    () => ({
+      registerView: (
+        view: View,
+        onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>,
+        id?: string
+      ) => context.registerView(view, onVisibilityChangeRef, id),
+      unregisterView: (view: View) => context.unregisterView(view),
+      updateView: (view: View) => context.updateView(view),
+    }),
+    [context]
   );
 }

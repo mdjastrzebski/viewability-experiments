@@ -1,12 +1,9 @@
 import { ViewabilityRoot } from "@/components/viewability-root";
 import { ViewabilityTracker } from "@/components/viewability-tracker";
-import { throttle } from "es-toolkit";
 import * as React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 const data = Array.from({ length: 10 }, (_, index) => index);
-
-const THROTTLE_DELAY = 100;
 
 export default function Index() {
   const renderItem = ({ item }: { item: number }) => {
@@ -15,16 +12,13 @@ export default function Index() {
 
   return (
     <ViewabilityRoot>
-      {(coordinator) => (
+      {({ updateViewability }) => (
         <ScrollView
-          onLayout={() => coordinator.updateRoot()}
-          onScroll={throttle(
-            () => coordinator.updateAllViews(),
-            THROTTLE_DELAY,
-            {
-              edges: ["leading", "trailing"],
-            }
-          )}
+          onLayout={updateViewability}
+          onScroll={() => {
+            console.log("🍓 ScrollView - scroll");
+            updateViewability();
+          }}
         >
           {data.map((item) => renderItem({ item }))}
         </ScrollView>
@@ -43,12 +37,18 @@ function Item({ title }: ItemProps) {
 
   return (
     <View style={styles.item}>
-      <ViewabilityTracker testID={title} onVisibilityChange={setIsTitleVisible}>
+      <ViewabilityTracker
+        testID={title + "a"}
+        onVisibilityChange={setIsTitleVisible}
+      >
         <Text style={[styles.itemText, isTitleVisible && styles.visible]}>
           Item no. {title}
         </Text>
       </ViewabilityTracker>
-      <ViewabilityTracker testID={title} onVisibilityChange={setIsLoremVisible}>
+      <ViewabilityTracker
+        testID={title + "b"}
+        onVisibilityChange={setIsLoremVisible}
+      >
         <Text style={[styles.itemText, isLoremVisible && styles.visible]}>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua.

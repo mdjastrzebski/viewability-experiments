@@ -1,6 +1,6 @@
 import * as React from "react";
 import { LayoutChangeEvent, View } from "react-native";
-import { useViewabilityCoordinator } from "./viewability-context";
+import { useViewabilityTracker } from "./viewability-root";
 
 export interface ViewabilityTrackerProps {
   children: React.ReactNode;
@@ -16,35 +16,33 @@ export function ViewabilityTracker({
   const ref = React.useRef<View | null>(null);
   const latestVisibilityChangeRef =
     React.useRef<typeof onVisibilityChange>(onVisibilityChange);
-  const coordinator = useViewabilityCoordinator();
+  const tracker = useViewabilityTracker();
 
   const testIdRef = React.useRef(testID);
 
   React.useLayoutEffect(() => {
-    console.log("Tracker - useLayoutEffect", testIdRef.current);
     latestVisibilityChangeRef.current = onVisibilityChange;
   }, [onVisibilityChange]);
 
   React.useLayoutEffect(() => {
     const testID = testIdRef.current;
 
-    console.log("Tracker - useLayoutEffect register", testID);
+    console.log("VTracker - useLayoutEffect register", testID);
     const view = ref.current!;
-    coordinator.registerView(view, latestVisibilityChangeRef);
+    tracker.registerView(view, latestVisibilityChangeRef, testID);
 
     return () => {
-      console.log("Tracker - useLayoutEffect unregister", testID);
-      coordinator.unregisterView(view);
+      console.log("VTracker - useLayoutEffect unregister", testID);
+      tracker.unregisterView(view);
     };
-  }, [coordinator]);
+  }, [tracker]);
 
   const handleLayout = (_event: LayoutChangeEvent) => {
-    console.log("Tracker - handleLayout", testID);
-    const view = ref.current!;
-    coordinator.updateView(view);
+    console.log("VTracker - handleLayout", testID);
+    tracker.updateView(ref.current!);
   };
 
-  console.log("Tracker - render", testID);
+  console.log("VTracker - render", testID);
   return (
     <View ref={ref} testID={testID} onLayout={handleLayout}>
       {children}
