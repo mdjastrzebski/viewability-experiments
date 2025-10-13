@@ -18,11 +18,9 @@ export function ViewabilityRoot({ children }: ViewabilityRootProps) {
   );
 
   React.useLayoutEffect(() => {
-    console.log("VRoot - useLayoutEffect");
     coordinatorRef.current.registerRoot(rootRef.current!);
   }, []);
 
-  console.log("VRoot - render");
   const childProps: ViewabilityTriggers = React.useMemo(
     () => ({
       updateViewability: () => coordinatorRef.current.updateAllViews(),
@@ -67,9 +65,8 @@ export function useViewabilityTracker() {
     () => ({
       registerView: (
         view: View,
-        onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>,
-        id?: string
-      ) => context.registerView(view, onVisibilityChangeRef, id),
+        onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>
+      ) => context.registerView(view, onVisibilityChangeRef),
       unregisterView: (view: View) => context.unregisterView(view),
       updateView: (view: View) => context.updateView(view),
     }),

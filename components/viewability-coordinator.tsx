@@ -9,7 +9,6 @@ const THROTTLE_DELAY = 100;
 interface ViewEntry {
   isVisible: boolean;
   onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>;
-  id?: string;
 }
 
 export class ViewabilityCoordinator {
@@ -28,18 +27,17 @@ export class ViewabilityCoordinator {
     onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>,
     id?: string
   ) {
-    console.log("Coordinator - registerView", id);
+    console.log("🍏 Coordinator - registerView", id);
     this.views.set(view, {
       isVisible: false,
       onVisibilityChangeRef,
-      id,
     });
 
     this.updateView(view);
   }
 
   unregisterView(view: View) {
-    console.log("Coordinator - unregisterView");
+    console.log("🍏 Coordinator - unregisterView");
     this.views.delete(view);
   }
 
@@ -53,7 +51,7 @@ export class ViewabilityCoordinator {
       return;
     }
 
-    console.log("Coordinator - updateView", viewEntry.id);
+    console.log("🍏 Coordinator - updateView");
 
     const viewRect = getBoundingClientRect(view);
     const isVisible = isViewable(
@@ -66,20 +64,12 @@ export class ViewabilityCoordinator {
 
     if (viewEntry.isVisible !== isVisible) {
       console.log(
-        "🍓 Coordinator - updateViewVisibility - detected",
-        viewEntry.id,
+        "🌀 Coordinator - updateViewVisibility - detected",
         viewRect,
         viewEntry
       );
       viewEntry.isVisible = isVisible;
       viewEntry.onVisibilityChangeRef.current(isVisible);
-    } else {
-      console.log(
-        "🕳️ Coordinator - updateViewVisibility - noop",
-        viewEntry.id,
-        viewRect,
-        viewEntry
-      );
     }
   }
 
@@ -96,7 +86,7 @@ export class ViewabilityCoordinator {
 
     this.rootRect = getBoundingClientRect(this.root);
 
-    console.log("Coordinator - updateAllViews");
+    console.log("🍓 Coordinator - updateAllViews START");
     totalDuration = 0;
 
     for (const view of this.views.keys()) {
