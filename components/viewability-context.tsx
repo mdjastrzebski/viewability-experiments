@@ -17,27 +17,19 @@ export function useViewabilityCoordinator() {
   return context.current;
 }
 
-interface RootEntry {
-  clientRect: Coords;
-}
-
 interface ViewEntry {
   isVisible: boolean;
-  clientRect: Coords;
   onVisibilityChangeRef: React.RefObject<(isVisible: boolean) => void>;
 }
 
 export class ViewabilityCoordinator {
   private readonly views: Map<View, ViewEntry> = new Map();
   private root: View | null = null;
-  private rootEntry: RootEntry = {
-    clientRect: { x: 0, y: 0, width: 0, height: 0 },
-  };
+  private rootRect: Coords = { x: 0, y: 0, width: 0, height: 0 };
 
   registerRoot(root: View) {
-    // @ts-ignore missing type info
-    this.rootEntry.clientRect = getBoundingClientRect(root);
-    console.log("Coordinator - registerRoot", this.rootEntry);
+    this.root = root;
+    this.updateAllViews();
   }
 
   registerView(
@@ -48,7 +40,6 @@ export class ViewabilityCoordinator {
     this.views.set(view, {
       isVisible: false,
       onVisibilityChangeRef,
-      clientRect: { x: 0, y: 0, width: 0, height: 0 },
     });
 
     this.updateView(view);
@@ -59,53 +50,43 @@ export class ViewabilityCoordinator {
   }
 
   updateView(view: View) {
+    const viewRect = getBoundingClientRect(view);
+    const isVisible = isViewable(
+      50,
+      viewRect.y - this.rootRect.y,
+      viewRect.y + viewRect.height - this.rootRect.y,
+      this.rootRect.height,
+      viewRect.height
+    );
+
     const viewEntry = this.views.get(view)!;
-    // @ts-ignore missing type info
-    viewEntry.clientRect = getBoundingClientRect(view);
-    console.log("Coordinator - updateView", totalDuration, viewEntry);
-    this.updateViewVisibility(viewEntry);
+    if (viewEntry.isVisible !== isVisible) {
+      console.log(
+        "Coordinator - updateViewVisibility - detected",
+        viewRect,
+        viewEntry
+      );
+      viewEntry.isVisible = isVisible;
+      viewEntry.onVisibilityChangeRef.current(isVisible);
+    } else {
+      console.log(
+        "Coordinator - updateViewVisibility - noop",
+        viewRect,
+        viewEntry
+      );
+    }
   }
 
-  updateRoot() {
+  updateAllViews() {
     if (!this.root) {
       return;
     }
 
-    this.rootEntry.clientRect = getBoundingClientRect(this.root!);
-    console.log(
-      "Coordinator - updateRootScroll",
-      totalDuration,
-      this.rootEntry
-    );
-    for (const view of this.views.keys()) {
-      this.updateView(view);
-    }
-  }
+    this.rootRect = getBoundingClientRect(this.root);
 
-  updateRootScroll() {
     console.log("Coordinator - updateRootScroll");
     for (const view of this.views.keys()) {
       this.updateView(view);
-    }
-  }
-
-  updateViewVisibility(viewEntry: ViewEntry) {
-    const isVisible = isViewable(
-      50,
-      viewEntry.clientRect.y - this.rootEntry.clientRect.y,
-      viewEntry.clientRect.y +
-        viewEntry.clientRect.height -
-        this.rootEntry.clientRect.y,
-      this.rootEntry.clientRect.height,
-      viewEntry.clientRect.height
-    );
-
-    if (viewEntry.isVisible !== isVisible) {
-      console.log("Coordinator - updateViewVisibility - detected", viewEntry);
-      viewEntry.isVisible = isVisible;
-      viewEntry.onVisibilityChangeRef.current(isVisible);
-    } else {
-      console.log("Coordinator - updateViewVisibility - noop", viewEntry);
     }
   }
 }

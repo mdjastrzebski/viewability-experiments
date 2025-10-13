@@ -19,7 +19,7 @@ export default function Index() {
         <ScrollView
           onLayout={() => coordinator.updateRoot()}
           onScroll={throttle(
-            () => coordinator.updateRootScroll(),
+            () => coordinator.updateAllViews(),
             THROTTLE_DELAY,
             {
               edges: ["leading", "trailing"],
