@@ -1,52 +1,44 @@
 import * as React from "react";
-import { LayoutChangeEvent, View } from "react-native";
-import { useViewabilityCoordinator } from "./viewability-context";
+import { View } from "react-native";
+import { useViewabilityTracker } from "./viewability-root";
 
 export interface ViewabilityTrackerProps {
   children: React.ReactNode;
   onVisibilityChange: (isVisible: boolean) => void;
-  testID?: string;
+  enabled?: boolean;
+  viewablePercentThreshold?: number;
 }
 
 export function ViewabilityTracker({
   children,
   onVisibilityChange,
-  testID,
+  enabled = true,
+  viewablePercentThreshold = 50,
 }: ViewabilityTrackerProps) {
   const ref = React.useRef<View | null>(null);
-  const latestVisibilityChangeRef =
+  const onVisibilityChangeRef =
     React.useRef<typeof onVisibilityChange>(onVisibilityChange);
-  const coordinator = useViewabilityCoordinator();
-
-  const testIdRef = React.useRef(testID);
+  const tracker = useViewabilityTracker();
 
   React.useLayoutEffect(() => {
-    console.log("Tracker - useLayoutEffect", testIdRef.current);
-    latestVisibilityChangeRef.current = onVisibilityChange;
+    onVisibilityChangeRef.current = onVisibilityChange;
   }, [onVisibilityChange]);
 
   React.useLayoutEffect(() => {
-    const testID = testIdRef.current;
+    const view = ref.current;
+    if (!view || !enabled || !tracker) {
+      return;
+    }
 
-    console.log("Tracker - useLayoutEffect register", testID);
-    const view = ref.current!;
-    coordinator.registerView(view, latestVisibilityChangeRef);
+    tracker.registerView(view, {
+      onVisibilityChangeRef,
+      viewablePercentThreshold,
+    });
+    return () => tracker.unregisterView(view);
+  }, [tracker, enabled, viewablePercentThreshold]);
 
-    return () => {
-      console.log("Tracker - useLayoutEffect unregister", testID);
-      coordinator.unregisterView(view);
-    };
-  }, [coordinator]);
-
-  const handleLayout = (_event: LayoutChangeEvent) => {
-    console.log("Tracker - handleLayout", testID);
-    const view = ref.current!;
-    coordinator.updateView(view);
-  };
-
-  console.log("Tracker - render", testID);
   return (
-    <View ref={ref} testID={testID} onLayout={handleLayout}>
+    <View ref={ref} onLayout={() => tracker?.updateView(ref.current)}>
       {children}
     </View>
   );
